@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    user: root
+    volumes:
+      - ./prom/config:/etc/prometheus
+      - ./prom/volume:/prometheus
+    command: # web.enalbe-lifecycle은 api 재시작없이 설정파일들을 reload 할 수 있게 해줌
+      - "--web.enable-lifecycle"
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: always
+
+  grafana:
+    image: grafana/grafana:7.5.13-ubuntu
+    container_name: grafana
+    ports:
+      - 3000:3000 # hosts:container
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+      GF_LOG_FILTERS: rendering:debug
+      GF_ALERTING_ENABLED: true
+      GF_UNIFIED_ALERTING_ENABLED: true
+      GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS: true
+    user: "472"
+    volumes:
+      - ./grafana/volume:/var/lib/grafana
+      - ./grafana/conf/grafana.ini:/etc/grafana/grafana.ini
+    restart: always
+
+  renderer:
+    image: grafana/grafana-image-renderer:3.5.0
+    ports:
+      - 8081
+    user: "472"
+    restart: always
+
+  alertmanager:
+    image: bitnami/alertmanager:latest
+    container_name: alertmanager
+    user: root
+    ports:
+      - 9093:9093
+    volumes:
+      - ./alertmanager/conf/config.yml:/opt/bitnami/alertmanager/conf/config.yml

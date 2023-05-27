@@ -1,0 +1,5 @@
+grafana/volume/grafana.db
+grafana/conf/volume
+grafana/volume/png
+prom/volume
+prom/volume/data/queries.active
